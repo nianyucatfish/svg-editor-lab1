@@ -46,6 +46,11 @@ export class SvgCodec {
       rootTransform = new SvgTransform(scale, -viewBox[0] * scale, -viewBox[1] * scale);
     }
     const rootPresentation = new Map([...rootAttrs].filter(([name]) => this.#presentation.includes(name)));
+    if (rootPresentation.has('stroke-width')) {
+      const width = this.#length(rootPresentation.get('stroke-width')!, 'stroke-width');
+      if (width < 0) throw new Error('stroke-width must be non-negative');
+      rootPresentation.set('stroke-width', String(width));
+    }
     drawing.setPresentation(rootPresentation);
     const used = new Set<string>();
     const all: Element[] = [];

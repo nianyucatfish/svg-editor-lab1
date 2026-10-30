@@ -20,7 +20,7 @@ export abstract class Shape {
   children(): readonly Shape[] { return []; }
   #styles = new Map<string, string>();
   protected copyStyles(target: Shape): void { target.#styles = new Map(this.#styles); target.#extras = new Map(this.#extras); }
-  protected styles(): string { return [...this.#styles].map(([k, v]) => ` ${k}=${v}`).join(''); }
+  protected styles(): string { return [...this.#styles, ...this.#extras].map(([k, v]) => ` ${k}=${v}`).join(''); }
   set(attr: string, value: string): void {
     if (!['fill', 'stroke', 'stroke-width'].includes(attr)) throw new Error(`unknown attribute: ${attr}`);
     if (attr === 'stroke-width' && (value.trim() === '' || !Number.isFinite(Number(value)) || Number(value) < 0)) throw new Error('stroke-width must be non-negative');
