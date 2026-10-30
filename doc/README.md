@@ -1,6 +1,6 @@
 # 架构与开发记录
 
-状态：第三步完成，Phase 1 全部命令已实现，自动化验证通过；浏览器渲染尚待人工确认，尚未打 final 标签。
+状态：Phase 1 交付验收版，自动化验证通过；浏览器渲染由使用者目视确认。
 
 ## 架构方案
 
@@ -113,3 +113,24 @@ infrastructure --> domain
 - `npm run check`、`npm test` 通过，共 20 组测试。新增 SVG 往返、中文/实体转义、显式 ID 冲突、变换组合、viewBox、未知内容拒绝、带空格路径、读写失败原子性和已有目标文件保护。
 - `npm run cli < examples/flowchart.commands` 回放成功：输出 8 个元素的流程图，save 后 undo 正确拒绝，再读取 other.svg，补齐 rect1 并报告 7 个元素。
 - 已生成 examples/flowchart.svg 供人工浏览器检查。尚未执行浏览器目视验收；尚未打 final 标签。
+
+### 交付前复核
+
+- 对照附件命令表复核文档操作、六类图形创建、编辑、组合、查询及撤销重做；新增附件典型会话的端到端命令测试，验证每一步状态以及保存和外部文件读入。
+- 复核时发现 group/addto/ungroup 从原父级摘出图形会改变继承的 fill、stroke、字号等，造成 SVG 外观变化；改为比较新旧继承值，仅在必要时给移动的子树补上明确属性。撤销仍恢复改动前的状态。
+- 特别记录语义边界：容器 opacity 是整体合成效果，无法仅靠继承属性在任意重叠子图形上等价展开；跨该类容器移动或解组可能改变合成外观。当前阶段不实现通用 SVG 合成引擎。
+- 重新执行 `npm run check` 和 `npm test`，25 项测试通过。覆盖正常与失败路径、完整附件会话、原子性、全部图形类型及属性、容器、顺序、history、文件和 XML 往返。`examples/flowchart.svg` 供用户做浏览器目视验收。
+- SVG 导入支持范围及有意拒绝的特性见项目根 README；未知内容报错，避免无提示丢失。对完整 SVG 标准的支持不是当前实现的结论。
+
+### 作业要求对应检查
+
+| 要求 | 实现和证据 |
+|---|---|
+| TypeScript、类封装与多态、一类一文件 | `src/domain` 的 Shape 派生类、Group 及各层类；`npm run check` |
+| Command 与 Composite | `EditCommand` / `Editor` 的事务和历史；`Shape` / `Group` 的统一图形接口和递归操作 |
+| 六种图形及命令 | `CommandDispatcher` 命令注册，`ShapeFactory` 构造；`test/editor.test.ts` 和 `test/assignment.test.ts` |
+| 唯一 ID、缺失 ID 警告、失败不改状态 | `Drawing`、`SvgCodec` 及 `test/svg.test.ts`；包含稍后出现的 ID 冲突和失败后的 redo |
+| SVG 读写和历史屏障 | `LocalDocumentStore`、`FileCommands`；保存原子性、重读和屏障测试 |
+| 架构、变化点、过程、依赖一致性、质量手段 | 本文各节和每阶段记录；`test/` 与 `examples/` |
+| 分步 Git 历史与远程 | 仓库 main 的多次提交；交付版本按课程要求标记 `final` |
+| 浏览器渲染确认 | 输出的 `examples/flowchart.svg` 可供用户目视验收，自动化测试不替代目视验收 |
