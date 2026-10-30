@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "cli": "node --experimental-strip-types src/cli/Main.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts"
   },
-  "devDependencies": { "@types/node": "^24.0.0", "typescript": "^5.9.0" }
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
 }

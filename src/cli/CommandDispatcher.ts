@@ -3,11 +3,13 @@ import type { Command } from '../application/Command.ts';
 import { CreateCommand } from '../application/CreateCommand.ts';
 import { InitCommand } from '../application/InitCommand.ts';
 import { DisplayCommand } from '../application/DisplayCommand.ts';
+import { EditingCommands } from '../application/EditingCommands.ts';
 import { Tokenizer } from './Tokenizer.ts';
 export class CommandDispatcher {
   readonly #tokenizer = new Tokenizer();
   readonly #commands: Map<string, Command>;
   constructor(editor: Editor) {
+    const editing = new EditingCommands(editor);
     // Allowed name dispatch point; replace with registration in a later phase.
     this.#commands = new Map<string, Command>([
       ['init', new InitCommand(editor)],
@@ -20,13 +22,14 @@ export class CommandDispatcher {
         if (args.length !== 1) throw new Error('usage: show <id>');
         return editor.drawing.show(args[0]);
       })],
-      ['canvas', new DisplayCommand(args => {
-        if (args.length) throw new Error('step 1 supports canvas query only');
-        return editor.drawing.size();
-      })],
+      ['canvas', editing.canvas()],
+      ['move', editing.move()], ['scale', editing.scale()], ['set', editing.set()],
+      ['delete', editing.delete()], ['group', editing.group()], ['ungroup', editing.ungroup()],
+      ['addto', editing.addto()], ['front', editing.reorder(true)], ['back', editing.reorder(false)],
+      ['undo', editing.history(false)], ['redo', editing.history(true)],
       ['help', new DisplayCommand(args => {
         if (args.length) throw new Error('usage: help');
-        return 'Step 1 commands:\ninit [w] [h]\ncreate <rect|circle|ellipse|line|text|g> <id> [params] [in <containerId>]\ncanvas\ntree [id]\nshow <id>\nhelp\nOther assignment commands will be added in later steps. Ctrl+D to exit.';
+        return 'Commands (step 2):\ninit [w] [h]\ncreate <rect|circle|ellipse|line|text|g> <id> [params] [in <containerId>]\ncanvas [w h]\nmove <id> <dx> <dy>\nscale <id> <factor>\nset <id> <attr> <value>\ndelete <id>\ngroup <newGid> <id1> [id2...]\nungroup <gid>\naddto <gid> <id>\nfront <id> / back <id>\nundo / redo\ntree [id]\nshow <id>\nhelp\nSVG read/save will be added in the next step. Ctrl+D to exit.';
       })]
     ]);
   }

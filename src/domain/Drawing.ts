@@ -1,14 +1,82 @@
 import { Group } from './Group.ts';
 import { Shape } from './Shape.ts';
 export class Drawing {
-  readonly #width: number;
-  readonly #height: number;
+  #width: number;
+  #height: number;
   readonly #root = new Group('_root');
   readonly #shapes = new Map<string, Shape>();
   constructor(width = 800, height = 600) {
     if (![width, height].every(n => Number.isFinite(n) && n > 0)) throw new Error('canvas dimensions must be positive');
     this.#width = width;
     this.#height = height;
+  }
+  clone(): Drawing {
+    const copy = new Drawing(this.#width, this.#height);
+    const register = (shape: Shape): void => {
+      copy.#shapes.set(shape.id, shape);
+      if (shape instanceof Group) shape.children().forEach(register);
+    };
+    this.#root.children().forEach(shape => { const child = shape.clone(); copy.#root.add(child); register(child); });
+    return copy;
+  }
+  resize(width: number, height: number): void {
+    if (![width, height].every(n => Number.isFinite(n) && n > 0)) throw new Error('canvas dimensions must be positive');
+    this.#width = width; this.#height = height;
+  }
+  delete(id: string): void {
+    const shape = this.find(id);
+    shape.parent!.remove(shape);
+    const unregister = (node: Shape): void => {
+      this.#shapes.delete(node.id);
+      if (node instanceof Group) node.children().forEach(unregister);
+    };
+    unregister(shape);
+  }
+  container(id: string): Group {
+    const shape = this.find(id);
+    if (!(shape instanceof Group)) throw new Error(`not a container: ${id}`);
+    return shape;
+  }
+  addto(gid: string, id: string): void {
+    const group = this.container(gid), shape = this.find(id);
+    for (let node: Shape | null = group; node; node = node.parent) {
+      if (node === shape) throw new Error(`cannot group a container into its own descendant: ${id}`);
+    }
+    shape.parent!.remove(shape); group.add(shape);
+  }
+  group(gid: string, ids: string[]): void {
+    if (this.#shapes.has(gid)) throw new Error(`id already exists: ${gid}`);
+    if (new Set(ids).size !== ids.length) throw new Error('duplicate group member');
+    const shapes = ids.map(id => this.find(id));
+    for (const shape of shapes) {
+      for (let parent = shape.parent; parent; parent = parent.parent) {
+        if (shapes.includes(parent)) throw new Error(`cannot group a container into its own descendant: ${parent.id}`);
+      }
+    }
+    // Preserve document traversal order, even when arguments are reversed.
+    const selected = new Set(shapes), ordered: Shape[] = [];
+    const visit = (node: Shape): void => {
+      if (selected.has(node)) ordered.push(node);
+      if (node instanceof Group) node.children().forEach(visit);
+    };
+    this.#root.children().forEach(visit);
+    const group = new Group(gid);
+    const parent = ordered[0].parent!;
+    const index = parent.children().indexOf(ordered[0]);
+    ordered.forEach(shape => { shape.parent!.remove(shape); group.add(shape); });
+    parent.insert(group, index); this.#shapes.set(gid, group);
+  }
+  ungroup(gid: string): void {
+    const group = this.container(gid), parent = group.parent!;
+    if (parent === this.#root) throw new Error(`cannot ungroup top-level container: ${gid}`);
+    const index = parent.remove(group);
+    group.children().forEach((child, offset) => { group.remove(child); parent.insert(child, index + offset); });
+    this.#shapes.delete(gid);
+  }
+  reorder(id: string, front: boolean): void {
+    const shape = this.find(id), parent = shape.parent!;
+    parent.remove(shape);
+    parent.insert(shape, front ? parent.children().length : 0);
   }
   size(): string { return `${this.#width}x${this.#height}`; }
   find(id: string): Shape {
