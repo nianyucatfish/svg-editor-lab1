@@ -117,3 +117,30 @@ test('each shape geometry whitelist, move and scale operate polymorphically', ()
     ok(`set ${type} stroke-width 1.5`); assert.match(ok(`show ${type}`), /stroke-width=1.5/);
   }
 });
+
+test('reparenting preserves inherited SVG styles across groups and undo', () => {
+  const { ok } = session(); ok('init');
+  ok('create g red'); ok('set red fill red'); ok('set red stroke blue');
+  ok('create g green'); ok('set green fill green');
+  ok('create rect inherited 0 0 10 10 in red');
+  ok('create rect explicit 20 0 10 10 yellow in red');
+  ok('addto green inherited');
+  assert.match(ok('show inherited'), /fill=red/); assert.match(ok('show inherited'), /stroke=blue/);
+  ok('undo'); assert.doesNotMatch(ok('show inherited'), /fill=/);
+  ok('group pair inherited explicit'); ok('ungroup pair');
+  assert.match(ok('show inherited'), /parent=g#red/);
+  ok('create g inner in red'); ok('set inner fill purple');
+  ok('create circle child 0 0 1 in inner'); ok('ungroup inner');
+  assert.match(ok('show child'), /fill=purple/);
+  ok('group cross inherited child'); assert.match(ok('show child'), /fill=purple/);
+  ok('addto green cross'); assert.match(ok('show cross'), /fill=red/);
+});
+
+test('moving default styles under styled parent keeps the original SVG appearance', () => {
+  const { ok } = session(); ok('init');
+  ok('create rect r 0 0 10 10'); ok('create g colored');
+  ok('set colored fill red'); ok('set colored stroke blue');
+  ok('addto colored r');
+  assert.match(ok('show r'), /fill=black/); assert.match(ok('show r'), /stroke=none/);
+  ok('undo'); assert.doesNotMatch(ok('show r'), /fill=/);
+});

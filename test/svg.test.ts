@@ -110,3 +110,28 @@ test('serialization failure preserves existing target bytes and edit history', t
   assert.equal(cli.execute('undo'), 'edit undone'); assert.equal(editor.drawing.count, 0);
   assert.deepEqual(readdirSync(directory), ['existing.svg']);
 });
+
+test('group, addto and ungroup preserve inherited presentation in saved SVG', () => {
+  const imported = codec.decode(wrap('<g id="left" fill="red" font-size="24"><text id="t" x="0" y="20">X</text></g><g id="right" fill="blue"/>'));
+  const editor = new Editor(); editor.loaded(imported.drawing, 'source.svg');
+  const cli = new CommandDispatcher(editor);
+  assert.doesNotMatch(cli.execute('addto right t'), /^error:/);
+  let svg = codec.encode(editor.drawing);
+  assert.match(svg, /<text[^>]*fill="red"[^>]*font-size="24"/);
+  assert.equal(codec.decode(svg).drawing.find('t').content(), 'X');
+  cli.execute('undo');
+  assert.doesNotMatch(cli.execute('group pair t'), /^error:/);
+  assert.doesNotMatch(cli.execute('set pair fill green'), /^error:/);
+  assert.doesNotMatch(cli.execute('ungroup pair'), /^error:/);
+  svg = codec.encode(editor.drawing);
+  assert.match(svg, /<text[^>]*fill="green"/);
+  assert.match(codec.decode(svg).drawing.show('t'), /fill=green/);
+});
+
+test('reparenting preserves an imported px stroke inherited from the SVG root', () => {
+  const { drawing } = codec.decode(wrap('<rect id="r" width="10" height="10"/><g id="g" stroke-width="1"/>', 'stroke-width="3px"'));
+  const editor = new Editor(); editor.loaded(drawing, 'source.svg');
+  const cli = new CommandDispatcher(editor);
+  assert.doesNotMatch(cli.execute('addto g r'), /^error:/);
+  assert.match(codec.encode(editor.drawing), /<rect[^>]*stroke-width="3"/);
+});

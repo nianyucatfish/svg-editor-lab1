@@ -1,0 +1,40 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { CommandDispatcher } from '../src/cli/CommandDispatcher.ts';
+import { LocalDocumentStore } from '../src/infrastructure/LocalDocumentStore.ts';
+import { Editor } from '../src/application/Editor.ts';
+
+test('assignment transcript: edit, group, history, errors, save and external read', t => {
+  const directory = mkdtempSync(join(tmpdir(), 'lab1-acceptance-'));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const target = join(directory, 'demo.svg');
+  const cli = new CommandDispatcher(new Editor(), new LocalDocumentStore());
+  const exec = (command: string) => cli.execute(command);
+  const ok = (command: string) => {
+    const result = exec(command); assert.doesNotMatch(result, /^error:/, `${command}: ${result}`); return result;
+  };
+  ok('init 800 600');
+  ok('create rect bg 0 0 800 600 #ffffff');
+  ok('create text title 20 40 "My Diagram"');
+  ok('create circle c1 100 100 20 red');
+  ok('create rect box 200 80 60 60 #3366ff');
+  ok('group markers c1 box');
+  assert.match(ok('tree'), /g#markers[^]*circle#c1[^]*rect#box/);
+  ok('move c1 30 0'); assert.match(ok('show c1'), /cx=130/);
+  ok('undo'); assert.match(ok('show c1'), /cx=100/);
+  ok('redo'); assert.match(ok('show c1'), /cx=130/);
+  ok('set title text "My Diagram v2"'); assert.match(ok('show title'), /My Diagram v2/);
+  ok('undo'); assert.match(ok('show title'), /My Diagram"/);
+  assert.equal(exec('group bad c1 markers'), 'error: cannot group a container into its own descendant: markers');
+  ok('delete box'); assert.match(exec('show box'), /no such shape/);
+  ok('undo'); assert.match(ok('show box'), /parent=g#markers/);
+  assert.match(ok(`save "${target}"`), /\(5 elements\)/);
+  const xml = readFileSync(target, 'utf8');
+  assert.match(xml, /<g id="markers">/); assert.match(xml, /id="c1"[^>]*cx="130"/);
+  assert.equal(exec('undo'), 'error: undo not allowed after io command');
+  assert.match(ok('read examples/other.svg'), /warning: assigned id rect1 to unnamed <rect>\nread examples\/other.svg \(7 elements\)/);
+  assert.match(ok('tree'), /rect#rect1[^]*text#t1[^]*circle#c1[^]*g#g1[^]*rect#r2[^]*circle#c2[^]*ellipse#e1/);
+});
