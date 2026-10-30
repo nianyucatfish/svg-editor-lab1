@@ -12,8 +12,14 @@ export abstract class Shape {
   abstract clone(): Shape;
   abstract move(dx: number, dy: number): void;
   abstract scale(factor: number): void;
+  #extras = new Map<string, string>();
+  importPresentation(name: string, value: string): void { this.#extras.set(name, value); }
+  attributes(): Map<string, string> { return new Map([['id', this.id], ...this.#styles, ...this.#extras]); }
+  get isContainer(): boolean { return false; }
+  content(): string | null { return null; }
+  children(): readonly Shape[] { return []; }
   #styles = new Map<string, string>();
-  protected copyStyles(target: Shape): void { target.#styles = new Map(this.#styles); }
+  protected copyStyles(target: Shape): void { target.#styles = new Map(this.#styles); target.#extras = new Map(this.#extras); }
   protected styles(): string { return [...this.#styles].map(([k, v]) => ` ${k}=${v}`).join(''); }
   set(attr: string, value: string): void {
     if (!['fill', 'stroke', 'stroke-width'].includes(attr)) throw new Error(`unknown attribute: ${attr}`);

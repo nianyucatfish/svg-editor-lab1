@@ -4,12 +4,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "cli": "node --experimental-strip-types src/cli/Main.ts",
+    "cli": "node --experimental-strip-types src/Main.ts",
     "check": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0"
+  },
+  "dependencies": {
+    "@xmldom/xmldom": "^0.9.12"
   }
 }

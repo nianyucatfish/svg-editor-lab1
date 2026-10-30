@@ -17,6 +17,14 @@ export class Rect extends Shape {
   get type(): string { return 'rect'; }
   details(): string { return `x=${this.#x} y=${this.#y} width=${this.#width} height=${this.#height}` + this.styles(); }
 
+  override attributes(): Map<string, string> {
+    const attributes = super.attributes();
+    attributes.set('x', String(this.#x));
+    attributes.set('y', String(this.#y));
+    attributes.set('width', String(this.#width));
+    attributes.set('height', String(this.#height));
+    return attributes;
+  }
   clone(): Rect { const copy = new Rect(this.id, this.#x, this.#y, this.#width, this.#height); this.copyStyles(copy); return copy; }
   move(dx: number, dy: number): void { this.#x = this.finite(this.#x + dx); this.#y = this.finite(this.#y + dy); }
   scale(factor: number): void { this.#x = this.finite(this.#x * factor); this.#y = this.finite(this.#y * factor); this.#width = this.finite(this.#width * factor); this.#height = this.finite(this.#height * factor); }

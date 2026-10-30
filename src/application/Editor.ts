@@ -5,6 +5,10 @@ export class Editor {
   #undo: EditCommand[] = [];
   #redo: EditCommand[] = [];
   #blocked = true;
+  #path: string | null = null;
+  get path(): string | null { return this.#path; }
+  loaded(drawing: Drawing, path: string): void { this.replace(drawing); this.#path = path; this.barrier(); }
+  saved(path: string): void { this.#path = path; this.barrier(); }
   get drawing(): Drawing {
     if (!this.#drawing) throw new Error("no document. use 'init' or 'read' first");
     return this.#drawing;
@@ -34,7 +38,7 @@ export class Editor {
   }
   init(width = 800, height = 600): string {
     const drawing = new Drawing(width, height);
-    this.replace(drawing); this.barrier();
+    this.replace(drawing); this.#path = null; this.barrier();
     return `canvas ${drawing.size()} created`;
   }
 }

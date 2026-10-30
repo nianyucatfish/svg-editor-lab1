@@ -16,6 +16,14 @@ export class Line extends Shape {
   get type(): string { return 'line'; }
   details(): string { return `x1=${this.#x1} y1=${this.#y1} x2=${this.#x2} y2=${this.#y2}` + this.styles(); }
 
+  override attributes(): Map<string, string> {
+    const attributes = super.attributes();
+    attributes.set('x1', String(this.#x1));
+    attributes.set('y1', String(this.#y1));
+    attributes.set('x2', String(this.#x2));
+    attributes.set('y2', String(this.#y2));
+    return attributes;
+  }
   clone(): Line { const copy = new Line(this.id, this.#x1, this.#y1, this.#x2, this.#y2); this.copyStyles(copy); return copy; }
   move(dx: number, dy: number): void { this.#x1 = this.finite(this.#x1 + dx); this.#y1 = this.finite(this.#y1 + dy); this.#x2 = this.finite(this.#x2 + dx); this.#y2 = this.finite(this.#y2 + dy); }
   scale(factor: number): void { this.#x1 = this.finite(this.#x1 * factor); this.#y1 = this.finite(this.#y1 * factor); this.#x2 = this.finite(this.#x2 * factor); this.#y2 = this.finite(this.#y2 * factor); }

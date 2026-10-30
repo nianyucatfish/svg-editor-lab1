@@ -9,7 +9,7 @@ test('CLI process replays a transcript and keeps accepting commands after errors
     'move node 5 10', 'undo', 'redo',
     'set label text "updated"', 'scale node 0', 'tree', 'show r', ''
   ].join('\n');
-  const result = spawnSync(process.execPath, ['--experimental-strip-types', 'src/cli/Main.ts'], { input, encoding: 'utf8', timeout: 5000 });
+  const result = spawnSync(process.execPath, ['--experimental-strip-types', 'src/Main.ts'], { input, encoding: 'utf8', timeout: 5000 });
   assert.equal(result.status, 0); assert.equal(result.stderr, '');
   assert.match(result.stdout, /error: scale factor must be positive/);
   assert.match(result.stdout, /rect#r x=15 y=30 width=100 height=50 fill=blue/);

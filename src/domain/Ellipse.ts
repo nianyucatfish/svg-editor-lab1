@@ -17,6 +17,14 @@ export class Ellipse extends Shape {
   get type(): string { return 'ellipse'; }
   details(): string { return `cx=${this.#cx} cy=${this.#cy} rx=${this.#rx} ry=${this.#ry}` + this.styles(); }
 
+  override attributes(): Map<string, string> {
+    const attributes = super.attributes();
+    attributes.set('cx', String(this.#cx));
+    attributes.set('cy', String(this.#cy));
+    attributes.set('rx', String(this.#rx));
+    attributes.set('ry', String(this.#ry));
+    return attributes;
+  }
   clone(): Ellipse { const copy = new Ellipse(this.id, this.#cx, this.#cy, this.#rx, this.#ry); this.copyStyles(copy); return copy; }
   move(dx: number, dy: number): void { this.#cx = this.finite(this.#cx + dx); this.#cy = this.finite(this.#cy + dy); }
   scale(factor: number): void { this.#cx = this.finite(this.#cx * factor); this.#cy = this.finite(this.#cy * factor); this.#rx = this.finite(this.#rx * factor); this.#ry = this.finite(this.#ry * factor); }

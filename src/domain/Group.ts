@@ -3,7 +3,8 @@ export class Group extends Shape {
   #children: Shape[] = [];
   get type(): string { return 'g'; }
   details(): string { return this.styles().trim(); }
-  children(): readonly Shape[] { return [...this.#children]; }
+  override get isContainer(): boolean { return true; }
+  override children(): readonly Shape[] { return [...this.#children]; }
   clone(): Group {
     const copy = new Group(this.id);
     this.copyStyles(copy);

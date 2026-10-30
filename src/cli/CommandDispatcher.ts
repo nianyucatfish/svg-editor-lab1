@@ -4,11 +4,13 @@ import { CreateCommand } from '../application/CreateCommand.ts';
 import { InitCommand } from '../application/InitCommand.ts';
 import { DisplayCommand } from '../application/DisplayCommand.ts';
 import { EditingCommands } from '../application/EditingCommands.ts';
+import type { DocumentStore } from '../application/DocumentStore.ts';
+import { FileCommands } from '../application/FileCommands.ts';
 import { Tokenizer } from './Tokenizer.ts';
 export class CommandDispatcher {
   readonly #tokenizer = new Tokenizer();
   readonly #commands: Map<string, Command>;
-  constructor(editor: Editor) {
+  constructor(editor: Editor, store?: DocumentStore) {
     const editing = new EditingCommands(editor);
     // Allowed name dispatch point; replace with registration in a later phase.
     this.#commands = new Map<string, Command>([
@@ -29,9 +31,14 @@ export class CommandDispatcher {
       ['undo', editing.history(false)], ['redo', editing.history(true)],
       ['help', new DisplayCommand(args => {
         if (args.length) throw new Error('usage: help');
-        return 'Commands (step 2):\ninit [w] [h]\ncreate <rect|circle|ellipse|line|text|g> <id> [params] [in <containerId>]\ncanvas [w h]\nmove <id> <dx> <dy>\nscale <id> <factor>\nset <id> <attr> <value>\ndelete <id>\ngroup <newGid> <id1> [id2...]\nungroup <gid>\naddto <gid> <id>\nfront <id> / back <id>\nundo / redo\ntree [id]\nshow <id>\nhelp\nSVG read/save will be added in the next step. Ctrl+D to exit.';
+        return 'Commands:\ninit [w] [h]\nread <file.svg>\nsave [file.svg]\ncreate <rect|circle|ellipse|line|text|g> <id> [params] [in <containerId>]\ncanvas [w h]\nmove <id> <dx> <dy>\nscale <id> <factor>\nset <id> <attr> <value>\ndelete <id>\ngroup <newGid> <id1> [id2...]\nungroup <gid>\naddto <gid> <id>\nfront <id> / back <id>\nundo / redo\ntree [id]\nshow <id>\nhelp\nCtrl+D to exit.';
       })]
     ]);
+    if (store) {
+      const files = new FileCommands(editor, store);
+      this.#commands.set('read', files.read());
+      this.#commands.set('save', files.save());
+    }
   }
   execute(line: string): string {
     try {

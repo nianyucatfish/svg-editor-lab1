@@ -13,6 +13,13 @@ export class Text extends Shape {
   get type(): string { return 'text'; }
   details(): string { return `x=${this.#x} y=${this.#y}` + ` ${JSON.stringify(this.#content)}` + this.styles(); }
 
+  override attributes(): Map<string, string> {
+    const attributes = super.attributes();
+    attributes.set('x', String(this.#x));
+    attributes.set('y', String(this.#y));
+    return attributes;
+  }
+  override content(): string { return this.#content; }
   clone(): Text { const copy = new Text(this.id, this.#x, this.#y, this.#content); this.copyStyles(copy); return copy; }
   move(dx: number, dy: number): void { this.#x = this.finite(this.#x + dx); this.#y = this.finite(this.#y + dy); }
   scale(factor: number): void { this.#x = this.finite(this.#x * factor); this.#y = this.finite(this.#y * factor); }

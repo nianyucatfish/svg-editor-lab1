@@ -15,6 +15,13 @@ export class Circle extends Shape {
   get type(): string { return 'circle'; }
   details(): string { return `cx=${this.#cx} cy=${this.#cy} r=${this.#r}` + this.styles(); }
 
+  override attributes(): Map<string, string> {
+    const attributes = super.attributes();
+    attributes.set('cx', String(this.#cx));
+    attributes.set('cy', String(this.#cy));
+    attributes.set('r', String(this.#r));
+    return attributes;
+  }
   clone(): Circle { const copy = new Circle(this.id, this.#cx, this.#cy, this.#r); this.copyStyles(copy); return copy; }
   move(dx: number, dy: number): void { this.#cx = this.finite(this.#cx + dx); this.#cy = this.finite(this.#cy + dy); }
   scale(factor: number): void { this.#cx = this.finite(this.#cx * factor); this.#cy = this.finite(this.#cy * factor); this.#r = this.finite(this.#r * factor); }

@@ -1,6 +1,9 @@
 import { Group } from './Group.ts';
 import { Shape } from './Shape.ts';
 export class Drawing {
+  #presentation = new Map<string, string>();
+  setPresentation(attributes: Map<string, string>): void { this.#presentation = new Map(attributes); }
+  presentation(): ReadonlyMap<string, string> { return new Map(this.#presentation); }
   #width: number;
   #height: number;
   readonly #root = new Group('_root');
@@ -12,6 +15,7 @@ export class Drawing {
   }
   clone(): Drawing {
     const copy = new Drawing(this.#width, this.#height);
+    copy.setPresentation(this.#presentation);
     const register = (shape: Shape): void => {
       copy.#shapes.set(shape.id, shape);
       if (shape instanceof Group) shape.children().forEach(register);
@@ -78,6 +82,10 @@ export class Drawing {
     parent.remove(shape);
     parent.insert(shape, front ? parent.children().length : 0);
   }
+  elements(): readonly Shape[] { return this.#root.children(); }
+  get width(): number { return this.#width; }
+  get height(): number { return this.#height; }
+  get count(): number { return this.#shapes.size; }
   size(): string { return `${this.#width}x${this.#height}`; }
   find(id: string): Shape {
     const shape = this.#shapes.get(id);
